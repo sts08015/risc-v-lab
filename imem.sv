@@ -1,16 +1,3 @@
-/* ********************************************
- *	COSE222 Lab #2
- *
- *	Module: instruction memory (imem.sv)
- *	- 1 address input port
- *	- 32-bit 1 data output port
- *	- A single entry size is 32 bit, which is equivalent to the RISC-V instruction size
- *
- *	Author: Gunjae Koo (gunjaekoo@korea.ac.kr)
- *
- * ********************************************
- */
-
 `timescale 1ns/1ps
 
 module imem

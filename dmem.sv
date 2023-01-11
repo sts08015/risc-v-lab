@@ -1,16 +1,3 @@
-/* ********************************************
- *	COSE222 Lab #2
- *
- *	Module: data memory (dmem.sv)
- *	- 1 address input port
- *	- 32-bit 1 data input and output ports
- *	- A single entry size is 64-bit
- *
- *	Author: Gunjae Koo (gunjaekoo@korea.ac.kr)
- *
- * ********************************************
- */
-
 `timescale 1ns/1ps
 
 module dmem

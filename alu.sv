@@ -1,14 +1,3 @@
-/* ********************************************
- *	COSE222 Lab #2
- *
- *	Module: ALU (alu.sv)
- *  - 64-bit 2 input and 1 output ports
- *
- *  Author: Gunjae Koo (gunjaekoo@korea.ac.kr)
- *
- * ********************************************
- */
-
 `timescale 1ns/1ps
 
 module alu

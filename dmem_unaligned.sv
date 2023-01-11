@@ -1,17 +1,3 @@
-/* ********************************************
- *	RISC-V RV32I single-cycle processor design
- *
- *	Module: data memory (dmem.sv)
- *	- 1 address input port
- *	- 32-bit 1 data output port
- *	- This data memory supports byte-address
- *	- RISC-V does not restrict aligned word
- *
- *	Author: Gunjae Koo (gunjaekoo@korea.ac.kr)
- *
- * ********************************************
- */
-
 `timescale 1ns/1ps
 `define FF 1	// FF delay for just better waveform figures
 

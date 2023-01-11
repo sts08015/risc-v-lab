@@ -1,16 +1,3 @@
-/* ********************************************
- *	COSE222 Lab #2
- *
- *	Module: register file (regfile.sv)
- *	- 2 input and 1 output ports
- *	- 32 register entries including zero register (x0)
- *  - No internal forwarding is supported
- *
- *	Author: Gunjae Koo (gunjaekoo@korea.ac.kr)
- *
- * ********************************************
- */
-
 `timescale 1ns/1ps
 
 module regfile
