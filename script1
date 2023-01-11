@@ -1,0 +1,1 @@
+verilator -Wall --trace --cc single_cycle_cpu.sv imem.sv regfile.sv alu.sv dmem.sv --exe tb_single_cycle_cpu.cpp

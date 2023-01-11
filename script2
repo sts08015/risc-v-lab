@@ -1,0 +1,1 @@
+make -C obj_dir -f Vsingle_cycle_cpu.mk Vsingle_cycle_cpu
