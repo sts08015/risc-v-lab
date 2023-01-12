@@ -271,7 +271,7 @@ module single_cycle_cpu
         else if(branch[3] == 1'b1) begin    //bge
             pc_next_sel = (~alu_sign || alu_zero);
         end
-        else if(branch[4] == 1'b1) begin    //bltu  --> unsigned
+        else if(branch[4] == 1'b1) begin    //bltu
             pc_next_sel = alu_sign;
         end
         else if(branch[5] == 1'b1) begin    //bgeu

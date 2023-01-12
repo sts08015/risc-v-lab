@@ -11,7 +11,7 @@ module alu
     output          sign,            // Sign bit
     output          carry           //carry flag
 );
-    reg [REG_WIDTH:0] tmp;
+    logic [REG_WIDTH:0] tmp;
 
     always_comb begin
         case (alu_control)
