@@ -36,6 +36,7 @@ module single_cycle_cpu
     logic   [REG_WIDTH-1:0] alu_result;
     logic           alu_zero;
     logic           alu_sign;
+    logic           alu_carry;
 
     logic   [DMEM_ADDR_WIDTH-1:0]    dmem_addr;
     logic   [31:0]  dmem_din, dmem_dout;
@@ -322,7 +323,12 @@ module single_cycle_cpu
             end
         end
         else if(slt) begin
-            rd_din = {31'b0,alu_sign};
+            if(opcode == 7'b0110011 && funct3 == 3'b011 && funct7 == 7'd0) begin    //sltu
+                rd_din = {31'd0,alu_carry};
+            end
+            else begin
+                rd_din = {31'd0,alu_sign};
+            end
         end
         else if(opcode == 7'b0110111) begin //lui
             rd_din = imm32 << 12;
@@ -387,7 +393,8 @@ module single_cycle_cpu
         .alu_control        (alu_control),        
         .result             (alu_result),         
         .zero               (alu_zero),
-        .sign               (alu_sign)          
+        .sign               (alu_sign),
+        .carry              (alu_carry)          
     );
 
     // DMEM
