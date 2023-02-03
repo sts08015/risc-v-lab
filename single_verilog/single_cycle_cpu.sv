@@ -190,7 +190,7 @@ module single_cycle_cpu
             end
             7'b0010011: begin   //i-type
                 imm12 = inst[31:20];
-                if(alu_control == 4'b0111 || alu_control == 4'b1000 || alu_control == 4'b1001) begin    //slli, srli, srai
+                if(funct3 == 3'b101) begin    //slli, srli, srai
                     imm12 = {7'd0,imm12[4:0]};
                 end
                 imm_flag = 1'b1;
