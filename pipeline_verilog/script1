@@ -1,0 +1,1 @@
+verilator -Wall --trace --cc pipeline_cpu.sv imem.sv regfile.sv alu.sv dmem.sv --exe tb_pipeline_cpu.cpp

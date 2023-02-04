@@ -1,0 +1,1 @@
+make -C obj_dir -f Vpipeline_cpu.mk Vpipeline_cpu
