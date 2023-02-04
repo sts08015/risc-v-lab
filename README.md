@@ -1,7 +1,8 @@
 # risc-v-lab
-Extended Version of COSE222 Lab
+**Extended Version of COSE222 Lab**
 
 I implemented risc-v processor that supports every risc-v instructions except privileged instructions.
+
 Feel free to give feedback via email or github if there are any design flaws.
 
 ## Testcases
