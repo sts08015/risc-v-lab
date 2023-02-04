@@ -2,6 +2,7 @@
 Extended Version of COSE222 Lab
 
 I implemented risc-v processor that supports every risc-v instructions except privileged instructions.
+Feel free to give feedback via email or github if there are any design flaws.
 
 ## Testcases
 Below assembly codes are tescases that I made to verify built processor's correctness.
@@ -64,4 +65,5 @@ T3:    sll x4, x4, x6
 
 ## Useful link
 Instruction to Bianry : https://luplab.gitlab.io/rvcodecjs/
+
 Simulation            : https://github.com/mortbopet/Ripes
