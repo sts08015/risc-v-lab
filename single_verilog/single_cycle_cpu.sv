@@ -272,10 +272,10 @@ module single_cycle_cpu
             pc_next_sel = (~alu_sign || alu_zero);
         end
         else if(branch[4] == 1'b1) begin    //bltu
-            pc_next_sel = alu_sign;
+            pc_next_sel = alu_carry;
         end
         else if(branch[5] == 1'b1) begin    //bgeu
-            pc_next_sel = (~alu_sign || alu_zero);
+            pc_next_sel = (~alu_carry || alu_zero);
         end
         else if(branch[6] == 1'b1) begin    //unconditional branch (jal, jalr)
             pc_next_sel = 1'b1;
