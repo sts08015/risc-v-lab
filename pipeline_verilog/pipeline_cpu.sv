@@ -51,6 +51,11 @@ typedef struct packed {
     logic   [2:0]   funct3;
     logic   [6:0]   opcode;
     logic           slt;
+    logic   [31:0]  imm32;
+    logic   [31:0]  pc;
+    logic           sign;
+    logic           carry;
+    logic           ub;
 } pipe_ex_mem;
 
 // Pipe reg: MEM/WB
@@ -63,6 +68,11 @@ typedef struct packed {
     logic   [2:0]   funct3;
     logic   [6:0]   opcode;
     logic           slt;
+    logic   [31:0]  imm32;
+    logic   [31:0]  pc;
+    logic           sign;
+    logic           carry;
+    logic           ub;
 } pipe_mem_wb;
 
 /* verilator lint_off UNUSED */
@@ -89,11 +99,11 @@ module pipeline_cpu
     logic   [31:0]  pc_next_plus4, pc_next_branch;
     logic           pc_next_sel;
     logic           branch_taken;
-    //logic           regfile_zero;   // zero detection from regfile, REMOVED
 
     assign pc_next_plus4 = pc_curr + 4;
     assign pc_next_sel = branch_taken; 
-    assign pc_next = pc_next_sel ? pc_next_branch : pc_next_plus4;
+    assign pc_next = pc_next_sel ? (pc_next_branch != pc_curr) ? pc_next_branch : pc_next_plus4 : pc_next_plus4;
+    //second condition is for performance improvement. avoid unnecessary flush
 
     always_ff @ (posedge clk or negedge reset_b) begin
         if (~reset_b) begin
@@ -158,13 +168,12 @@ module pipeline_cpu
     /* Main control unit:
      * Main control unit generates control signals for datapath elements
      * The control signals are determined by decoding instructions
-     * Generating control signals using opcode = inst[6:0]
      */
     logic   [6:0]   opcode;
     logic   [6:0]   branch;
     logic           alu_src, mem_to_reg;
     logic   [1:0]   alu_op;
-    logic           mem_read, mem_write, reg_write; // declared above
+    logic           mem_read, mem_write, reg_write;
     logic   [6:0]   funct7;
     logic   [2:0]   funct3;
 
@@ -306,10 +315,12 @@ module pipeline_cpu
 
     // Computing branch target
     always_comb begin
-            if(mem.opcode == 7'b1100111) begin  //jalr  TODO: improve performance when jalr
-                pc_next_branch = mem.alu_result;
+            if(mem.opcode == 7'b1100111) begin  //jalr
+                pc_next_branch = (alu_result[REG_WIDTH-1:0] == pc_curr) ? alu_result[REG_WIDTH-1:0] : mem.alu_result;  //performance improvement
+                // if branch target is same as what processer fetched, forward alu_result
+                // otherwise, don't forward
             end
-            else begin
+            else if(|branch) begin
                 imm32_branch =  {imm32[30:0],1'b0}; //imm32 << 1;
                 pc_next_branch = id.pc + imm32_branch;
             end
@@ -333,10 +344,10 @@ module pipeline_cpu
     assign stall_by_load_use =  ex.mem_read & ((ex.rd == rs1) | (ex.rd == rs2));
     assign flush_by_branch =  branch_taken;
     
-    assign id_flush =  flush_by_branch & (pc_curr != pc_next_branch);     //branch_taken and the branch target isn't current pc
+    assign id_flush =  flush_by_branch & (id.pc != pc_next_branch);     //branch_taken and the branch target isn't current pc
     assign id_stall =  stall_by_load_use;
 	
-    assign if_flush =  flush_by_branch & (pc_next_plus4 != pc_next_branch);          //branch_taken and the branch target isn't fetched pc
+    assign if_flush =  flush_by_branch & (pc_curr != pc_next_branch);          //branch_taken and the branch target isn't fetched pc
     assign if_stall =  stall_by_load_use;
     assign pc_write =  ~(if_flush | if_stall);  //enable pc write only when fetch stage isn't flushed or stalled
 
@@ -348,8 +359,8 @@ module pipeline_cpu
     logic   [REG_WIDTH-1:0] rd_din;
     logic   [REG_WIDTH-1:0] rs1_dout, rs2_dout;
     
-    assign rs1 =  id.inst[19:15];     // our processor does NOT support U and UJ types
-    assign rs2 =  id.inst[24:20];     // consider ld and i-type
+    assign rs1 =  (opcode != 7'b0110111 && opcode != 7'b0010111 && opcode != 7'b1101111) ? id.inst[19:15]:'b0;     //lui, auipc, jal don't use rs1
+    assign rs2 =  (opcode != 7'b0110111 && opcode != 7'b0010111 && opcode != 7'b1101111 && opcode != 7'b1100111 && opcode != 7'b0000011 && opcode != 7'b0010011) ? id.inst[24:20]:'b0;     // ld, itype, lui, auipc, jal, jalr don't use rs2
     assign rd =  id.inst[11:7];
     // rd, rd_din, and reg_write will be determined in WB stage
     
@@ -372,7 +383,6 @@ module pipeline_cpu
     /* ID/EX pipeline register
      * - Supporting pipeline stalls
      */
-    //pipe_id_ex      ex;         // THINK WHY THIS IS EX...
 
     always_ff @ (posedge clk or negedge reset_b) begin
         if (~reset_b) begin
@@ -411,12 +421,12 @@ module pipeline_cpu
                 //ex.alu_src <= alu_src;
                 //ex.alu_op <= alu_op;
                 ex.mem_read <= mem_read;    //should update mem_read to escape stalled stage
-                ex.mem_write <= mem_write;
+                //ex.mem_write <= mem_write;
                 //ex.rs1 <= rs1;
                 //ex.rs2 <= rs2;
-                //ex.rd <= rd;
+                ex.rd <= rd;
                 ex.reg_write <= reg_write;
-                ex.mem_to_reg <= mem_to_reg;
+                //ex.mem_to_reg <= mem_to_reg;
             end
         end
     end
@@ -501,6 +511,7 @@ module pipeline_cpu
            2'b00 : alu_fwd_in1 = ex.rs1_dout;
            2'b10 : alu_fwd_in1 = mem.alu_result;    //EX-MEM -> ID-EX
            2'b01 : alu_fwd_in1 = rd_din;            //MEM-WB -> ID-EX
+           2'b11 : alu_fwd_in1 = mem.imm32;         //lui
            default: begin
            end
         endcase
@@ -511,6 +522,7 @@ module pipeline_cpu
            2'b00 : alu_fwd_in2 = ex.rs2_dout;
            2'b10 : alu_fwd_in2 = mem.alu_result;
            2'b01 : alu_fwd_in2 = rd_din;
+           2'b11 : alu_fwd_in2 = mem.imm32;
            default: begin
            end
         endcase
@@ -527,9 +539,11 @@ module pipeline_cpu
     */
 
     always_comb begin
-        if(mem.reg_write & (mem.rd == ex.rs1) & (mem.rd != 0)) begin
+        if(mem.opcode == 7'b0110111 && mem.rd == ex.rs1 && mem.rd != 0)  begin    //lui forwarding
+            assign forward_a = 2'b11;
+        end else if(mem.reg_write && mem.rd == ex.rs1 && mem.rd != 0) begin
             assign forward_a = 2'b10;   //EX-MEM -> ID-EX
-        end else if (wb.reg_write & (wb.rd == ex.rs1)) begin    //& (wb.rd != 0)
+        end else if (wb.reg_write && wb.rd == ex.rs1 && wb.rd != 0) begin
             assign forward_a = 2'b01;   //MEM-WB -> ID-EX
         end else begin
             assign forward_a = 2'b00;
@@ -537,9 +551,11 @@ module pipeline_cpu
     end
 
     always_comb begin
-        if(mem.reg_write & (mem.rd == ex.rs2)) begin    //& (mem.rd != 0)
+        if(mem.opcode == 7'b0110111 && mem.rd == ex.rs2 && mem.rd != 0) begin //lui forwarding
+            assign forward_b = 2'b11;
+        end else if(mem.reg_write && mem.rd == ex.rs2 && mem.rd != 0) begin
             assign forward_b = 2'b10;   //EX-MEM -> ID-EX
-        end else if (wb.reg_write & (wb.rd == ex.rs2)) begin    //& (wb.rd != 0)
+        end else if (wb.reg_write && wb.rd == ex.rs2 && wb.rd != 0) begin
             assign forward_b = 2'b01;   //MEM-WB -> ID-EX
         end else begin
             assign forward_b = 2'b00;
@@ -549,10 +565,9 @@ module pipeline_cpu
 
     // ALU
     logic   [REG_WIDTH-1:0] alu_in1, alu_in2;
-    logic   [REG_WIDTH-1:0] alu_result;
-    //logic           alu_zero;   // will not be used
+    logic   [REG_WIDTH:0] alu_result;
 
-    //unconditional branch or (LUI or AUIPC)
+    //unconditional branch or auipc
     assign alu_in1 = (ex.branch[6] || ex.opcode == 7'b0010111) ? ex.pc : alu_fwd_in1;
     assign alu_in2 =  ex.alu_src ? ex.imm32 : alu_fwd_in2;
 
@@ -564,18 +579,13 @@ module pipeline_cpu
         .in2                (alu_in2),
         .alu_control        (alu_control),
         .result             (alu_result)
-        //.zero               (alu_zero),	// REMOVED
-		//.sign				(alu_sign)		// REMOVED
     );
 
     // branch unit (BU)
-    //logic   [REG_WIDTH-1:0] sub_for_branch;
-    logic           bu_zero, bu_sign;
-    //logic           branch_taken;
-
-    //assign sub_for_branch =  /* FILL THIS */ 
+    logic           bu_zero, bu_sign, bu_carry;
     assign bu_zero =  ~(|alu_result); 
     assign bu_sign =  alu_result[REG_WIDTH-1];
+    assign bu_carry = alu_result[REG_WIDTH];
 
     always_comb begin
         if(ex.branch[0] == 1'b1) begin //beq
@@ -591,10 +601,10 @@ module pipeline_cpu
             branch_taken = (~bu_sign | bu_zero);
         end
         else if(ex.branch[4] == 1'b1) begin    //bltu
-            branch_taken = bu_sign;
+            branch_taken = bu_carry;
         end
         else if(ex.branch[5] == 1'b1) begin    //bgeu
-            branch_taken = (~bu_sign | bu_zero);
+            branch_taken = (~bu_carry | bu_zero);
         end
         else if(ex.branch[6] == 1'b1) begin    //unconditional branch (jal, jalr)
             branch_taken = 1'b1;
@@ -605,13 +615,12 @@ module pipeline_cpu
     // -------------------------------------------------------------------------
     /* Ex/MEM pipeline register
      */
-    //pipe_ex_mem     mem;
 
     always_ff @ (posedge clk or negedge reset_b) begin
         if (~reset_b) begin
             mem <= 'b0;
         end else begin
-            mem.alu_result <= alu_result;
+            mem.alu_result <= alu_result[REG_WIDTH-1:0];
             mem.rs2_dout <= alu_fwd_in2;    //for store op, inputs for alu and mem are different. imm, reg, respectively.
             mem.mem_read <= ex.mem_read;
             mem.mem_write <= ex.mem_write;
@@ -621,6 +630,11 @@ module pipeline_cpu
             mem.funct3 <= ex.funct3;
             mem.opcode <= ex.opcode;
             mem.slt <= slt;
+            mem.imm32 <= ex.imm32;
+            mem.pc <= ex.pc;
+            mem.sign <= bu_sign;
+            mem.carry <= bu_carry;
+            mem.ub <= ex.branch[6];
         end
     end
 
@@ -677,6 +691,11 @@ module pipeline_cpu
             wb.funct3 <= mem.funct3;
             wb.opcode <= mem.opcode;
             wb.slt <= mem.slt;
+            wb.imm32 <= mem.imm32;
+            wb.pc <= mem.pc;
+            wb.sign <= mem.sign;
+            wb.carry <= mem.carry;
+            wb.ub <= mem.ub;
         end
     end
 
@@ -684,43 +703,31 @@ module pipeline_cpu
     /* Writeback stage
      * - Write results to regsiter file
      */
-    
-    //assign rd_din =  wb.mem_to_reg ? wb.dmem_dout : wb.alu_result;  //TODO
 
-    
     always_comb begin
-        if(branch[6]) begin //unconditional branch (jal, jalr)
-            rd_din = pc_next_plus4;
-        end
-        else if(wb.mem_to_reg) begin
+        if(wb.ub) begin //unconditional branch (jal, jalr)
+            rd_din = wb.pc + 4; //pc_next_plus4;
+        end else if(wb.mem_to_reg) begin
             if(wb.funct3 == 3'd0) begin    //lb
                 rd_din = {{24{wb.dmem_dout[7]}},wb.dmem_dout[7:0]};   //sign-extension
-            end
-            else if(wb.funct3 == 3'b001) begin //lh
+            end else if(wb.funct3 == 3'b001) begin //lh
                 rd_din = {{16{wb.dmem_dout[15]}},wb.dmem_dout[15:0]};   //sign-extension
-            end
-            else if(wb.funct3 == 3'b100) begin //lbu
+            end else if(wb.funct3 == 3'b100) begin //lbu
                 rd_din = {24'd0,wb.dmem_dout[7:0]};
-            end
-            else if(funct3 == 3'b101) begin //lhu
+            end else if(wb.funct3 == 3'b101) begin //lhu
                 rd_din = {16'd0,wb.dmem_dout[15:0]};
-            end
-            else begin  //lw
+            end else begin  //lw
                 rd_din = wb.dmem_dout;
             end
-        end
-        else if(wb.slt) begin
+        end else if(wb.slt) begin
             if(wb.opcode == 7'b0110011 && wb.funct3 == 3'b011) begin    //sltu
-                rd_din = {31'd0,alu_carry};
+                rd_din = {31'd0,wb.carry};
+            end else begin
+                rd_din = {31'd0,wb.sign};
             end
-            else begin
-                rd_din = {31'd0,alu_sign};
-            end
-        end
-        else if(wb.opcode == 7'b0110111) begin //lui
-            rd_din = imm32 << 12;
-        end
-        else begin
+        end else if(wb.opcode == 7'b0110111) begin //lui
+            rd_din = {wb.imm32[19:0],12'd0};   //imm32 << 12;
+        end else begin
             rd_din = wb.alu_result;
         end
     end

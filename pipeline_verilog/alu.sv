@@ -17,44 +17,22 @@ module alu
     input   [REG_WIDTH-1:0] in1,    // Operand 1
     input   [REG_WIDTH-1:0] in2,    // Operand 2
     input   [3:0]   alu_control,    // ALU control signal
-    output  logic [REG_WIDTH-1:0] result // ALU output
-    //output          zero,           // Zero detection
-    //output          sign            // Sign bit
+    output  logic [REG_WIDTH:0] result // ALU output    REG_WIDTH:0 in order to detect carry bit
 );
-    
-    /*
+
+
     always_comb begin
         case (alu_control)
-            4'b0000: tmp = {1'b0,in1} & {1'b0,in2};
-            4'b0001: tmp = {1'b0,in1} | {1'b0,in2};
-            4'b0010: tmp = {1'b0,in1} + {1'b0,in2};
-			4'b0011: tmp = {1'b0,in1} ^ {1'b0,in2};
-            4'b0110: tmp = {1'b0,in1} - {1'b0,in2};
-            4'b0111: tmp = {1'b0,in1} << {1'b0,in2};
-            4'b1000: tmp = {1'b0,in1} >> {1'b0,in2};
-            4'b1001: tmp = {1'b0,in1} >>> {1'b0,in2};
+            4'b0000: result = {1'b0,in1} & {1'b0,in2};
+            4'b0001: result = {1'b0,in1} | {1'b0,in2};
+            4'b0010: result = {1'b0,in1} + {1'b0,in2};
+			4'b0011: result = {1'b0,in1} ^ {1'b0,in2};
+            4'b0110: result = {1'b0,in1} - {1'b0,in2};
+            4'b0111: result = {1'b0,in1} << {1'b0,in2};
+            4'b1000: result = {1'b0,in1} >> {1'b0,in2};
+            4'b1001: result = {1'b0,in1} >>> {1'b0,in2};
             default: begin
             end
 		endcase
     end
-    */
-
-    always_comb begin
-        case (alu_control)
-            4'b0000: result = in1 & in2;
-            4'b0001: result = in1 | in2;
-            4'b0010: result = in1 + in2;
-			4'b0011: result = in1 ^ in2;
-            4'b0110: result = in1 - in2;
-            4'b0111: result = in1 << in2;
-            4'b1000: result = in1 >> in2;
-            4'b1001: result = in1 >>> in2;
-            default: begin
-            end
-		endcase
-    end
-
-    //assign zero = ~|result;
-    //assign sign = result[REG_WIDTH-1];
-
 endmodule
