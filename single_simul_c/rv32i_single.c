@@ -310,10 +310,10 @@ int main(int argc, char* argv[]) {
 			pc_next_sel = (!alu_out.sign || alu_out.zero);
 		}
 		else if (branch[4] == 1) {    //bltu
-			pc_next_sel = alu_out.sign;
+			pc_next_sel = alu_out.carry;
 		}
 		else if (branch[5] == 1) {    //bgeu
-			pc_next_sel = (!alu_out.sign || alu_out.zero);
+			pc_next_sel = (!alu_out.carry || alu_out.zero);
 		}
 		else if (branch[6] == 1) {    //unconditional branch (jal, jalr)
 			pc_next_sel = 1;
