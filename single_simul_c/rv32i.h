@@ -6,7 +6,7 @@
  * **************************************
  */
 
-// headers
+ // headers
 #ifndef _RV32I_H_
 #define _RV32I_H_
 
@@ -26,7 +26,7 @@
 // structures
 struct imem_input_t {
 	uint32_t addr;
-	uint32_t *imem_data;
+	uint32_t* imem_data;
 };
 
 struct imem_output_t {
@@ -65,7 +65,7 @@ struct dmem_input_t {
 	uint32_t din;
 	uint8_t mem_read;
 	uint8_t mem_write;
-	uint32_t *dmem_data;
+	uint32_t* dmem_data;
 };
 
 struct dmem_output_t {
@@ -77,6 +77,6 @@ struct rf_output_t regfile(struct rf_input_t regfile_in);
 struct alu_output_t alu(struct alu_input_t alu_in);
 struct dmem_output_t dmem(struct dmem_input_t dmem_in);
 
-void show_state(uint32_t *reg_data, uint32_t *dmem_data);
+void show_state(uint32_t* reg_data, uint32_t* dmem_data);
 
 #endif

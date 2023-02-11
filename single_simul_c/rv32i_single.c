@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
 	dmem_data = (uint32_t*)malloc(DMEM_DEPTH * sizeof(uint32_t));
 
 	// initialize memory data
-	int i,k;
+	int i, k;
 	for (i = 0; i < 32; i++) reg_data[i] = 0;
 	for (i = 0; i < IMEM_DEPTH; i++) imem_data[i] = 0;
 	for (i = 0; i < DMEM_DEPTH; i++) dmem_data[i] = 0;
