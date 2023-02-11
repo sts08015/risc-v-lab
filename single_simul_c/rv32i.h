@@ -72,10 +72,10 @@ struct dmem_output_t {
 	uint32_t dout;
 };
 
-struct imem_output_t imem(struct imem_input_t imem_in, uint32_t* imem_data);
-struct rf_output_t regfile(struct rf_input_t regfile_in, uint32_t* reg_data);
+struct imem_output_t imem(struct imem_input_t imem_in);
+struct rf_output_t regfile(struct rf_input_t regfile_in);
 struct alu_output_t alu(struct alu_input_t alu_in);
-struct dmem_output_t dmem(struct dmem_input_t dmem_in, uint32_t* dmem_data);
+struct dmem_output_t dmem(struct dmem_input_t dmem_in);
 
 void show_state(uint32_t *reg_data, uint32_t *dmem_data);
 

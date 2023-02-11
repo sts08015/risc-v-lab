@@ -1,13 +1,13 @@
 #include "rv32i.h"
 
-struct imem_output_t imem(struct imem_input_t imem_in, uint32_t* imem_data)
+struct imem_output_t imem(struct imem_input_t imem_in)
 {
     struct imem_output_t output = { 0 };
     output.dout = imem_in.imem_data[imem_in.addr];
     return output;
 }
 
-struct rf_output_t regfile(struct rf_input_t regfile_in, uint32_t* reg_data)
+struct rf_output_t regfile(struct rf_input_t regfile_in)
 {
     if (regfile_in.reg_write) regfile_in.rf_data[regfile_in.rd] = regfile_in.rd_din;
 
@@ -66,7 +66,7 @@ struct alu_output_t alu(struct alu_input_t alu_in)
     return output;
 }
 
-struct dmem_output_t dmem(struct dmem_input_t dmem_in, uint32_t* dmem_data)
+struct dmem_output_t dmem(struct dmem_input_t dmem_in)
 {
 
     if (dmem_in.mem_write) {

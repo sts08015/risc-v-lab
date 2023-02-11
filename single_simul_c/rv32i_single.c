@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
 	while (cc < CLK_NUM) {
 		// instruction fetch
 		imem_in.addr = pc_curr >> 2;
-		imem_out = imem(imem_in, imem_data);
+		imem_out = imem(imem_in);
 		uint32_t inst = imem_out.dout;
 
 		// instruction decode
@@ -208,13 +208,13 @@ int main(int argc, char* argv[]) {
 		case 0x23:   //sd
 			imm12 = 0;
 			imm12 = ((inst >> 25) & 0x7f) << 5;
-			imm12 = imm12 | (inst >> 7) & 0x1f;//[11:7];
+			imm12 = imm12 | (inst >> 7) & 0x1f;
 			imm_flag = 1;
 			break;
 		case 0x13:   //i-type
-			imm12 = (inst >> 20) & 0xfff;//[31:20];
+			imm12 = (inst >> 20) & 0xfff;
 			if (alu_control == 7 || alu_control == 8 || alu_control == 9) {    //slli, srli, srai
-				imm12 = imm12 & 0x1f;//[4:0]};
+				imm12 = imm12 & 0x1f;
 			}
 			imm_flag = 1;
 			break;
@@ -224,12 +224,6 @@ int main(int argc, char* argv[]) {
 			imm12 = imm12 | (((inst >> 25) & 0x3f) << 4);
 			imm12 = imm12 | ((inst >> 8) & 0xf);
 			imm12 = imm12 | (((inst >> 7) & 0x1) << 10);
-			/*
-			imm12[11] = inst[31];
-			imm12[9:4] = inst[30:25];
-			imm12[3:0] = inst[11:8];
-			imm12[10] = inst[7];
-			*/
 			imm_flag = 1;
 			break;
 		case 0x6f: //unconditional branch - jal
@@ -238,12 +232,6 @@ int main(int argc, char* argv[]) {
 			imm20 = imm20 | (inst >> 21) & 0x3ff;
 			imm20 = imm20 | (((inst >> 20) & 0x1) << 10);
 			imm20 = imm20 | (((inst >> 12) & 0xff) << 11);
-			/*
-			imm20[19] = inst[31];
-			imm20[9:0] = inst[30:21];
-			imm20[10] = inst[20];
-			imm20[18:11] = inst[19:12];
-			*/
 			imm_flag = 0;
 			break;
 		case 0x67:   //unconditional branch - jalr
@@ -270,7 +258,7 @@ int main(int argc, char* argv[]) {
 				uint8_t sign_bit = (imm12 >> 11) & 0x1;
 				if (sign_bit) imm32 = 0xfffff000;
 				else imm32 = 0;
-				imm32 = imm32 | (imm12 & 0xfff);//{{20{imm12[11]}},imm12};    //sign extension
+				imm32 = imm32 | (imm12 & 0xfff);
 			}
 		}
 		else {
@@ -278,12 +266,11 @@ int main(int argc, char* argv[]) {
 			if (sign_bit) imm32 = 0xfffff000;
 			else imm32 = 0;
 			imm32 = imm32 | (imm20 & 0xfffff);
-			//imm32 = {{12{imm20[19]}},imm20};    //sign extension
 		}
 
-		regfile_in.rs1 = (inst >> 15) & 0x1f;//[19:15];
-		regfile_in.rs2 = (inst >> 20) & 0x1f;//[24:20];
-		regfile_in.rd = (inst >> 7) & 0x1f;//[11:7];
+		regfile_in.rs1 = (inst >> 15) & 0x1f;
+		regfile_in.rs2 = (inst >> 20) & 0x1f;
+		regfile_in.rd = (inst >> 7) & 0x1f;
 		regfile_in.reg_write = 0;	//not now (bc it is just decode step!)
 		regfile_out = regfile(regfile_in, reg_data);
 
@@ -335,17 +322,17 @@ int main(int argc, char* argv[]) {
 		// memory
 		dmem_in.addr = alu_out.result >> 2; //32bit-dmem
 		if (funct3 == 0) {  //sb
-			dmem_in.din = regfile_out.rs2_dout & 0xff;//[7:0];
+			dmem_in.din = regfile_out.rs2_dout & 0xff;
 		}
 		else if (funct3 == 1) { //sh
-			dmem_in.din = regfile_out.rs2_dout & 0xffff;//[15:0];
+			dmem_in.din = regfile_out.rs2_dout & 0xffff;
 		}
 		else {  //sw
 			dmem_in.din = regfile_out.rs2_dout;
 		}
 		dmem_in.mem_read = mem_read;
 		dmem_in.mem_write = mem_write;
-		dmem_out = dmem(dmem_in, dmem_data);
+		dmem_out = dmem(dmem_in);
 
 		// write-back
 		regfile_in.reg_write = reg_write;
@@ -364,13 +351,12 @@ int main(int argc, char* argv[]) {
 				if (sign_bit) regfile_in.rd_din = 0xffff0000;
 				else regfile_in.rd_din = 0;
 				regfile_in.rd_din = regfile_in.rd_din | (dmem_out.dout & 0xffff);   //sign-extension
-				//regfile_in.rd_din = {{16{dmem_dout[15]}},dmem_dout[15:0]};   //sign-extension
 			}
 			else if (funct3 == 4) { //lbu
-				regfile_in.rd_din = dmem_out.dout & 0xff;//[7:0];
+				regfile_in.rd_din = dmem_out.dout & 0xff;
 			}
 			else if (funct3 == 5) { //lhu
-				regfile_in.rd_din = dmem_out.dout & 0xffff;//[15:0];
+				regfile_in.rd_din = dmem_out.dout & 0xffff;
 			}
 			else {  //lw
 				regfile_in.rd_din = dmem_out.dout;
@@ -390,7 +376,7 @@ int main(int argc, char* argv[]) {
 		else {
 			regfile_in.rd_din = alu_out.result;
 		}
-		regfile_out = regfile(regfile_in, reg_data);
+		regfile_out = regfile(regfile_in);
 		cc++;
 	}
 
