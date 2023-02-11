@@ -235,8 +235,7 @@ module single_cycle_cpu
             else begin
                 imm32 = {{20{imm12[11]}},imm12};    //sign extension
             end
-        end
-        else begin
+        end else begin
             imm32 = {{12{imm20[19]}},imm20};    //sign extension
         end
     end
@@ -339,15 +338,15 @@ module single_cycle_cpu
     end
 
     // imem
-    assign imem_addr = pc_curr >> 2;    //32bit-imem
-
+    assign imem_addr = pc_curr[IMEM_ADDR_WIDTH+1:2];    //32bit-imem
+    
     // regfile
     assign rs1 = inst[19:15];
     assign rs2 = inst[24:20];
     assign rd = inst[11:7];
 
     // dmem
-    assign dmem_addr = alu_result >> 2; //32bit-dmem
+    assign dmem_addr = alu_result[DMEM_ADDR_WIDTH+1:2]; //32bit-dmem
     always_comb begin
         if(funct3 == 3'b000) begin  //sb
             dmem_din = {24'd0,rs2_dout[7:0]};
