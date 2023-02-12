@@ -5,6 +5,8 @@ I implemented risc-v processor that supports every risc-v instructions except pr
 
 Feel free to give feedback via email or github if there are any design flaws.
 
+Or questions are also fine.
+
 ## Testcases
 Below assembly codes are tescases that I made to verify built processor's correctness.
 
@@ -64,7 +66,7 @@ T3:    sll x4, x4, x6
        srli x4, x4, 4
 ```
 
-## Useful link
-Instruction to Bianry : https://luplab.gitlab.io/rvcodecjs/
+## Useful links
+Instruction to Binary Converter    : https://luplab.gitlab.io/rvcodecjs/
 
-Simulation            : https://github.com/mortbopet/Ripes
+Risc-V Simulator                   : https://github.com/mortbopet/Ripes
